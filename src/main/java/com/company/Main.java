@@ -2,6 +2,10 @@ package com.company;
 
 import com.company.model.Subject;
 import org.apache.commons.io.FileUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openqa.selenium.*;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -17,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class Main {
 
-    public static final LocalDateTime NEW_SCHOOL_YEAR_START = LocalDateTime.of(2019,9,2,6,0);
+    public static final LocalDateTime NEW_SCHOOL_YEAR_START = LocalDateTime.of(2019, 9, 2, 6, 0);
     public static final LocalDateTime TODAY = LocalDateTime.now();
 
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -50,25 +54,28 @@ public class Main {
     }
 
     private static void parseSubjects(PhantomJSDriver driver) throws InterruptedException, IOException {
+        String pageSource = driver.getPageSource();
+        Document htmlDocument = Jsoup.parse(pageSource);
 
+        Elements allDays = htmlDocument.getElementsByClass("dzienMiesiaca");
+        List<Element> selectedDays = new ArrayList<>();
 
+        for (Element element : allDays) {
+            Element dzienMiesiacaHead = element.getElementsByClass("dzienMiesiacaHead").first();
+            char dayOfMonth = dzienMiesiacaHead.text().charAt(0);
+            int dayOfMonthInt = Integer.parseInt(String.valueOf(dayOfMonth));
+            if (dayOfMonthInt < TODAY.getDayOfMonth()) {
+                selectedDays.add(element);
+            }
+        }
 
+        //remove bugged day (2 september) //nadal sie nie usuwa
+        selectedDays.remove(0);
 
-//        List<WebElement> allDays = driver.findElementsByClassName("dzienMiesiaca");
-//        List<WebElement> selectedDays = new ArrayList<>(Collections.emptyList());
-//
-//        for (WebElement element : allDays) {
-//            char dayOfMonth = element.getAttribute("id").charAt(6);
-//            int dayOfMonthInt = Integer.parseInt(String.valueOf(dayOfMonth));
-//            if (TODAY.getDayOfMonth() < dayOfMonthInt){
-//                selectedDays.add(element);
-//            }
-//        }
-//
-//        selectedDays.remove(0);
+        //wywalic wszystko co zawiera "Ferie" w nazwie przedmiotu
+        for (Element element : selectedDays) {
 
-
-
+        }
 
         List<WebElement> dirtyAllList = driver.findElementsByClassName("przedmiot");
         List<WebElement> clearWebElementsList = new ArrayList<>();
@@ -123,7 +130,7 @@ public class Main {
                     subject.setZwolnionyObecny(subject.getZwolnionyObecny() + 1);
                     break;
                 default:
-                        System.err.println("Cos sie zjebalo");
+                    System.err.println("Cos sie zjebalo");
 
             }
         }
